@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Embeddable;
+import javax.persistence.Embedded;
 import javax.persistence.EmbeddedId;
 import javax.persistence.Entity;
 import javax.persistence.EntityManager;
@@ -13,6 +14,7 @@ import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
 import javax.persistence.JoinColumn;
+import javax.persistence.JoinColumns;
 import javax.persistence.OneToMany;
 import javax.persistence.Persistence;
 import javax.persistence.Table;
@@ -50,7 +52,7 @@ public class JPAUnitTestCase {
 		ChildEntity childEntity = new ChildEntity();
 
 		ParentEntity parentEntity = new ParentEntity(
-				new ParentEntityId( 1 ),
+				new ParentEntityId( 1, new NestedEmbeddable( "1" ) ),
 				Collections.singletonList( childEntity )
 		);
 
@@ -79,14 +81,38 @@ public class JPAUnitTestCase {
 	}
 
 	@Embeddable
+	public static class NestedEmbeddable {
+		String name;
+
+		public NestedEmbeddable() {
+		}
+
+		public NestedEmbeddable(String name) {
+			this.name = name;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+	}
+
+	@Embeddable
 	public static class ParentEntityId implements Serializable {
 		int id;
+
+		@Embedded
+		NestedEmbeddable nestedEmbeddable;
 
 		public ParentEntityId() {
 		}
 
-		public ParentEntityId(int id) {
+		public ParentEntityId(int id, NestedEmbeddable nestedEmbeddable) {
 			this.id = id;
+			this.nestedEmbeddable = nestedEmbeddable;
 		}
 
 		public int getId() {
@@ -95,6 +121,14 @@ public class JPAUnitTestCase {
 
 		public void setId(int id) {
 			this.id = id;
+		}
+
+		public NestedEmbeddable getNestedEmbeddable() {
+			return nestedEmbeddable;
+		}
+
+		public void setNestedEmbeddable(NestedEmbeddable nestedEmbeddable) {
+			this.nestedEmbeddable = nestedEmbeddable;
 		}
 	}
 
@@ -106,7 +140,10 @@ public class JPAUnitTestCase {
 		private ParentEntityId id;
 
 		@OneToMany(cascade = CascadeType.ALL)
-		@JoinColumn(name = "parent_entity_id", referencedColumnName = "id", nullable = false)
+		@JoinColumns({
+				@JoinColumn(name = "parent_entity_id", referencedColumnName = "id", nullable = false),
+				@JoinColumn(name = "parent_entity_name", referencedColumnName = "name", nullable = false)
+		})
 		private List<ChildEntity> childEntities;
 
 		public ParentEntity() {
