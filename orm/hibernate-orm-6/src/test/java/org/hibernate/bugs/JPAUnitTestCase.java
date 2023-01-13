@@ -3,22 +3,15 @@ package org.hibernate.bugs;
 import java.io.Serializable;
 import java.util.List;
 
-import org.hibernate.annotations.JoinColumnOrFormula;
-import org.hibernate.annotations.JoinFormula;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
-import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Inheritance;
-import jakarta.persistence.InheritanceType;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Persistence;
 import jakarta.persistence.Table;
 
@@ -52,14 +45,14 @@ public class JPAUnitTestCase {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
 
-//		InvoicingAccountingVehicle vehicle = new InvoicingAccountingVehicle();
-//		vehicle.setVehicleId( 1L );
-//		vehicle.setField1( "V" );
-//		vehicle.setField2( "2020" );
-//		entityManager.persist( vehicle );
+		Vehicle vehicle = new Vehicle();
+		vehicle.setVehicleId( 1L );
+		vehicle.setStringProp( "2020" );
+		entityManager.persist( vehicle );
 
 		VehicleInvoice invoice = new VehicleInvoice();
-		invoice.setId( new VehicleInvoiceId( "V".toCharArray(), "2020".toCharArray(), 1 ) );
+		invoice.setId( "2020".toCharArray() );
+		invoice.setVehicle( vehicle );
 		entityManager.persist( invoice );
 
 		entityManager.getTransaction().commit();
@@ -73,96 +66,46 @@ public class JPAUnitTestCase {
 				VehicleInvoice.class
 		).getResultList();
 		assertEquals( 1, resultList.size() );
+		assertEquals( 1L, resultList.get( 0 ).getVehicle().getVehicleId().longValue() );
 
 		em2.getTransaction().commit();
 		em2.close();
 	}
 
-	@Embeddable
-	public static class VehicleInvoiceId implements Serializable {
-		@Column(name = "INVOICE_FIELD1", length = 2, nullable = false)
-		private char[] field1;
-
-		@Column(name = "INVOICE_FIELD2", length = 4, nullable = false)
-		private char[] field2;
-
-		@Column(name = "ADDITIONAL_FIELD", nullable = false)
-		private Integer additionalField;
-
-		public VehicleInvoiceId() {
-		}
-
-		public VehicleInvoiceId(char[] field1, char[] field2, Integer additionalField) {
-			this.field1 = field1;
-			this.field2 = field2;
-			this.additionalField = additionalField;
-		}
-
-		public char[] getField1() {
-			return field1;
-		}
-
-		public void setField1(char[] field1) {
-			this.field1 = field1;
-		}
-
-		public char[] getField2() {
-			return field2;
-		}
-
-		public void setField2(char[] field2) {
-			this.field2 = field2;
-		}
-
-		public Integer getAdditionalField() {
-			return additionalField;
-		}
-
-		public void setAdditionalField(Integer additionalField) {
-			this.additionalField = additionalField;
-		}
-	}
-
 	@Entity(name = "VehicleInvoice")
-	@Table(name = "INVOICE")
 	public static class VehicleInvoice {
-		@EmbeddedId
-		private VehicleInvoiceId id;
+		@Id
+		@Column(name = "char_array_col", length = 4, nullable = false)
+		private char[] id;
 
 		@ManyToOne(fetch = FetchType.EAGER)
-		@JoinColumnOrFormula(formula = @JoinFormula(value = "trim(INVOICE_FIELD1)", referencedColumnName = "FIELD_1"))
-		@JoinColumnOrFormula(column = @JoinColumn(name = "INVOICE_FIELD2", referencedColumnName = "FIELD_2", insertable = false, updatable = false))
-		private InvoicingAccountingVehicle vehicle;
+		@JoinColumn(name = "char_array_col", referencedColumnName = "string_col", insertable = false, updatable = false)
+		private Vehicle vehicle;
 
-		public VehicleInvoiceId getId() {
+		public char[] getId() {
 			return id;
 		}
 
-		public void setId(VehicleInvoiceId id) {
-			this.id = id;
+		public void setId(char[] field2) {
+			this.id = field2;
 		}
 
-		public InvoicingAccountingVehicle getVehicle() {
+		public Vehicle getVehicle() {
 			return vehicle;
 		}
 
-		public void setVehicle(InvoicingAccountingVehicle vehicle) {
+		public void setVehicle(Vehicle vehicle) {
 			this.vehicle = vehicle;
 		}
 	}
 
-	@Entity(name = "InvoicingAccountingVehicle")
-	@Table(name = "INV_VEHICLE")
-	public static class InvoicingAccountingVehicle implements Serializable {
+	@Entity(name = "Vehicle")
+	public static class Vehicle implements Serializable {
 		@Id
-		@Column(name = "ID", nullable = false)
 		private Long vehicleId;
 
-		@Column(name = "FIELD_1", nullable = false, length = 2)
-		private String field1;
-
-		@Column(name = "FIELD_2", nullable = false, length = 4)
-		private String field2;
+		@Column(name = "string_col", nullable = false)
+		private String stringProp;
 
 		public Long getVehicleId() {
 			return vehicleId;
@@ -172,20 +115,12 @@ public class JPAUnitTestCase {
 			this.vehicleId = vehicleId;
 		}
 
-		public String getField1() {
-			return field1;
+		public String getStringProp() {
+			return stringProp;
 		}
 
-		public void setField1(String field1) {
-			this.field1 = field1;
-		}
-
-		public String getField2() {
-			return field2;
-		}
-
-		public void setField2(String field2) {
-			this.field2 = field2;
+		public void setStringProp(String field2) {
+			this.stringProp = field2;
 		}
 	}
 }
