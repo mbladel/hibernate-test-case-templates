@@ -64,12 +64,26 @@ public class JPAUnitTestCase {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
 
-		TypedQuery<Sumary> query = entityManager.createQuery(
-				"SELECT NEW org.hibernate.bugs.Sumary(i, SUM(is.total)) " +
-						"FROM ItemSale is " +
-						"JOIN is.item i " +
-						"GROUP BY i", Sumary.class);
-		System.out.println(query.getResultList());
+//		TypedQuery<Sumary> query = entityManager.createQuery(
+//				"SELECT NEW org.hibernate.bugs.Sumary(i, SUM(is.total)) " +
+//						"FROM ItemSale is " +
+//						"JOIN is.item i " +
+//						"GROUP BY i", Sumary.class);
+//		System.out.println(query.getResultList());
+
+		entityManager.createNativeQuery( "select\n" +
+												 "        i2_0.id,\n" +
+												 "        i2_0.name,\n" +
+												 "        sum(i1_0.total) \n" +
+												 "    from\n" +
+												 "        ItemSale i1_0 \n" +
+												 "    join\n" +
+												 "        Item i2_0 \n" +
+												 "            on i2_0.id=i1_0.item_id \n" +
+												 "    group by\n" +
+				                                 "        i1_0.item_id"
+//												 "        i2_0.id" // nb: this works
+		).getResultList();
 
 		entityManager.getTransaction().commit();
 		entityManager.close();
