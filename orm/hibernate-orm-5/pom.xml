@@ -24,6 +24,11 @@
 			<artifactId>hibernate-testing</artifactId>
 			<version>${version.org.hibernate}</version>
 		</dependency>
+		<dependency>
+			<groupId>org.hibernate</groupId>
+			<artifactId>hibernate-jpamodelgen</artifactId>
+			<version>${version.org.hibernate}</version>
+		</dependency>
 
 		<dependency>
 			<groupId>com.h2database</groupId>
