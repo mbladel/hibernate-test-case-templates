@@ -30,6 +30,15 @@
             <property name="hibernate.cache.region.factory_class"
                       value="org.hibernate.testing.cache.CachingRegionFactory"/>
 
+            <!-- Added for test -->
+            <property name="hibernate.jdbc.batch_size" value="50" />
+            <property name="hibernate.jdbc.fetch_size" value="100" />
+            <property name="hibernate.jdbc.use_get_generated_keys" value="true" />
+            <property name="hibernate.cache.use_query_cache" value="false" />
+            <property name="hibernate.cache.use_second_level_cache" value="true" />
+            <property name="hibernate.cache.auto_evict_collection_cache" value="true" />
+            <!-- Added for test -->
+
             <!--NOTE: hibernate.jdbc.batch_versioned_data should be set to false when testing with Oracle-->
             <property name="hibernate.jdbc.batch_versioned_data" value="true"/>
 
