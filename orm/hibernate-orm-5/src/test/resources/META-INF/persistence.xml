@@ -33,6 +33,7 @@
 
             <!--NOTE: hibernate.jdbc.batch_versioned_data should be set to false when testing with Oracle-->
             <property name="hibernate.jdbc.batch_versioned_data" value="true"/>
+            <property name="hibernate.jdbc.batch_size" value="100"/>
 
             <property name="javax.persistence.validation.mode" value="NONE"/>
             <property name="hibernate.service.allow_crawling" value="false"/>
