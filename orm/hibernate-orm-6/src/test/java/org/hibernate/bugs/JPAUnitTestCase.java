@@ -1,8 +1,15 @@
 package org.hibernate.bugs;
 
+import java.util.Map;
+
+import jakarta.persistence.Entity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.Persistence;
+import jakarta.persistence.Table;
 
 import org.junit.After;
 import org.junit.Before;
@@ -34,5 +41,30 @@ public class JPAUnitTestCase {
 		// Do stuff...
 		entityManager.getTransaction().commit();
 		entityManager.close();
+	}
+
+	@Entity( name = "MapContainerEntity" )
+	@Table( name = "map_container_entity" )
+	public static class MapContainerEntity {
+		@Id
+		private Long id;
+		@OneToMany//(mappedBy = "container")
+		private Map<MapKeyEntity, MapValueEntity> map;
+	}
+
+	@Entity(name="MapKeyEntity")
+	@Table( name = "map_key_entity" )
+	public static class MapKeyEntity {
+		@Id
+		private Long id;
+	}
+
+	@Entity(name="MapValueEntity")
+	@Table( name = "map_value_entity" )
+	public static class MapValueEntity {
+		@Id
+		private Long id;
+//		@ManyToOne
+//		private MapContainerEntity container;
 	}
 }
