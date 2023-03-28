@@ -15,19 +15,34 @@
  */
 package org.hibernate.bugs;
 
+import java.util.List;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.Table;
+
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.event.spi.EventType;
+import org.hibernate.event.spi.PreLoadEvent;
+import org.hibernate.event.spi.PreLoadEventListener;
+import org.hibernate.query.Query;
+
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * This template demonstrates how to develop a test case for Hibernate ORM, using its built-in unit test framework.
  * Although ORMStandaloneTestCase is perfectly acceptable as a reproducer, usage of this class is much preferred.
  * Since we nearly always include a regression test with bug fixes, providing your reproducer using this method
  * simplifies the process.
- *
+ * <p>
  * What's even better?  Fork hibernate-orm itself, add your test case directly to a module's unit tests, then
  * submit it as a PR!
  */
@@ -37,8 +52,7 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	@Override
 	protected Class[] getAnnotatedClasses() {
 		return new Class[] {
-//				Foo.class,
-//				Bar.class
+				EntityA.class
 		};
 	}
 
@@ -50,6 +64,7 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 //				"Bar.hbm.xml"
 		};
 	}
+
 	// If those mappings reside somewhere other than resources/org/hibernate/test, change this.
 	@Override
 	protected String getBaseForMappings() {
@@ -69,11 +84,44 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	// Add your tests, using standard JUnit.
 	@Test
 	public void hhh123Test() throws Exception {
-		// BaseCoreFunctionalTestCase automatically creates the SessionFactory and provides the Session.
-		Session s = openSession();
-		Transaction tx = s.beginTransaction();
-		// Do stuff...
-		tx.commit();
-		s.close();
+		sessionFactory().getEventEngine().getListenerRegistry().appendListeners(
+				EventType.PRE_LOAD,
+				new MyPreLoadEventListener()
+		);
+
+		try (Session s = openSession()) {
+			Transaction tx = s.beginTransaction();
+			EntityA entityA1 = new EntityA();
+			entityA1.name = "Marco";
+
+			s.persist( entityA1 );
+			tx.commit();
+		}
+
+		try (Session s = openSession()) {
+			Transaction tx = s.beginTransaction();
+			String hql = "select e from EntityA e";
+			Query<EntityA> query = s.createQuery( hql, EntityA.class );
+			List<EntityA> actual = query.list();
+			assertThat( actual ).hasSize( 1 );
+			tx.rollback();
+		}
+	}
+
+	@Entity( name = "EntityA" )
+	@Table( name = "ENTITY_A" )
+	public static class EntityA {
+		@Id
+		@GeneratedValue
+		Integer id;
+
+		String name;
+	}
+
+	public static class MyPreLoadEventListener implements PreLoadEventListener {
+		@Override
+		public void onPreLoad(PreLoadEvent event) {
+			assertThat( event.getState() ).isNotNull();
+		}
 	}
 }

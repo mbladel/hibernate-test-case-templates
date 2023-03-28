@@ -69,7 +69,7 @@ public class JPAUnitTestCase {
 		private String seqNo;
 		private String partyCode;
 
-		@Column( name = "REF_NO" )
+		@Column( name = "REF_NO_AAA" )
 		public String getRefNo() {
 			return refNo;
 		}
@@ -109,7 +109,7 @@ public class JPAUnitTestCase {
 //		private InProcessGuaranteeEntity guarantee;
 
 		@Id
-		@Column( name = "REF_NO" )
+		@Column( name = "REF_NO_AAA" )
 		public String getRefNo() {
 			return refNo;
 		}
