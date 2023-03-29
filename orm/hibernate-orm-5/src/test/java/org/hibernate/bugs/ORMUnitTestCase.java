@@ -15,12 +15,18 @@
  */
 package org.hibernate.bugs;
 
+import java.util.List;
+
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.query.Query;
+
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * This template demonstrates how to develop a test case for Hibernate ORM, using its built-in unit test framework.
@@ -35,45 +41,36 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 
 	// Add your entities here.
 	@Override
-	protected Class[] getAnnotatedClasses() {
-		return new Class[] {
-//				Foo.class,
-//				Bar.class
-		};
+	protected Class<?>[] getAnnotatedClasses() {
+		return new Class<?>[] { MyEntity.class, ChildOneEntity.class, ChildTwoEntity.class, RelatedEntity.class };
 	}
 
-	// If you use *.hbm.xml mappings, instead of annotations, add the mappings here.
-	@Override
-	protected String[] getMappings() {
-		return new String[] {
-//				"Foo.hbm.xml",
-//				"Bar.hbm.xml"
-		};
-	}
-	// If those mappings reside somewhere other than resources/org/hibernate/test, change this.
-	@Override
-	protected String getBaseForMappings() {
-		return "org/hibernate/test/";
-	}
-
-	// Add in any settings that are specific to your test.  See resources/hibernate.properties for the defaults.
+	// Add in any settings that are specific to your test. See
+	// resources/hibernate.properties for the defaults.
 	@Override
 	protected void configure(Configuration configuration) {
-		super.configure( configuration );
+		super.configure(configuration);
 
-		configuration.setProperty( AvailableSettings.SHOW_SQL, Boolean.TRUE.toString() );
-		configuration.setProperty( AvailableSettings.FORMAT_SQL, Boolean.TRUE.toString() );
-		//configuration.setProperty( AvailableSettings.GENERATE_STATISTICS, "true" );
+		configuration.setProperty(AvailableSettings.SHOW_SQL, Boolean.TRUE.toString());
+		configuration.setProperty(AvailableSettings.FORMAT_SQL, Boolean.TRUE.toString());
 	}
 
 	// Add your tests, using standard JUnit.
 	@Test
-	public void hhh123Test() throws Exception {
-		// BaseCoreFunctionalTestCase automatically creates the SessionFactory and provides the Session.
-		Session s = openSession();
-		Transaction tx = s.beginTransaction();
-		// Do stuff...
-		tx.commit();
-		s.close();
+	public void hhh16254Test() throws Exception {
+		// BaseCoreFunctionalTestCase automatically creates the SessionFactory and
+		// provides the Session.
+		try (Session s = openSession()) {
+			Transaction tx = s.beginTransaction();
+			String hql = "select new "+MyPojo.class.getName()+"(sum(e.amount), re ) from MyEntity e join e.relatedEntity re where 1=1 group by re";
+//			String hql = "from RelatedEntity re group by re";
+			Query query = s.createQuery( hql);
+			List actual = query.list();
+			assertThat(actual).isEmpty();
+
+			// Verify the generated SQL
+			// In oracle we get ORA-00979 not a group by expression
+			tx.commit();
+		}
 	}
 }
