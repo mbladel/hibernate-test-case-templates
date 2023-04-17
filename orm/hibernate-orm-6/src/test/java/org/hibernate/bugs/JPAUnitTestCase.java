@@ -3,6 +3,7 @@ package org.hibernate.bugs;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
 import jakarta.persistence.Persistence;
+import jakarta.persistence.Query;
 
 import org.junit.After;
 import org.junit.Before;
@@ -31,7 +32,12 @@ public class JPAUnitTestCase {
 	public void hhh123Test() throws Exception {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
-		// Do stuff...
+
+		String hql = "SELECT ilog.lateralEntity.project FROM ImageLog ilog JOIN FETCH ilog.lateralEntity.project.company";
+		Query query = entityManager.createQuery( hql);
+//		query.setParameter(1, imageLogUuid);
+		query.getResultList();
+
 		entityManager.getTransaction().commit();
 		entityManager.close();
 	}
