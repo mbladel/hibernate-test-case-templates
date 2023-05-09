@@ -1,5 +1,10 @@
 package org.hibernate.bugs;
 
+import java.util.*;
+
+import jakarta.persistence.*;
+import jakarta.persistence.criteria.*;
+
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -18,6 +23,11 @@ class JPAUnitTestCase {
 	@BeforeEach
 	void init() {
 		entityManagerFactory = Persistence.createEntityManagerFactory( "templatePU" );
+		EntityManager entityManager = entityManagerFactory.createEntityManager();
+		entityManager.getTransaction().begin();
+
+		entityManager.getTransaction().commit();
+		entityManager.close();
 	}
 
 	@AfterEach
