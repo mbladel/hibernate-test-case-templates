@@ -1,8 +1,7 @@
 package org.hibernate.bugs;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
+import java.util.*;
+import jakarta.persistence.*;
 
 import org.junit.After;
 import org.junit.Before;
@@ -18,6 +17,11 @@ public class JPAUnitTestCase {
 	@Before
 	public void init() {
 		entityManagerFactory = Persistence.createEntityManagerFactory( "templatePU" );
+		EntityManager entityManager = entityManagerFactory.createEntityManager();
+		entityManager.getTransaction().begin();
+
+		entityManager.getTransaction().commit();
+		entityManager.close();
 	}
 
 	@After
