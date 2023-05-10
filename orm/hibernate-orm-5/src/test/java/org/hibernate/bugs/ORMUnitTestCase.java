@@ -15,19 +15,36 @@
  */
 package org.hibernate.bugs;
 
+import java.util.ArrayList;
+import java.util.List;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
+
 import org.hibernate.Session;
 import org.hibernate.Transaction;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.query.Query;
+
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * This template demonstrates how to develop a test case for Hibernate ORM, using its built-in unit test framework.
  * Although ORMStandaloneTestCase is perfectly acceptable as a reproducer, usage of this class is much preferred.
  * Since we nearly always include a regression test with bug fixes, providing your reproducer using this method
  * simplifies the process.
- *
+ * <p>
  * What's even better?  Fork hibernate-orm itself, add your test case directly to a module's unit tests, then
  * submit it as a PR!
  */
@@ -37,8 +54,8 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	@Override
 	protected Class[] getAnnotatedClasses() {
 		return new Class[] {
-//				Foo.class,
-//				Bar.class
+				EntityA.class,
+				EntityB.class
 		};
 	}
 
@@ -50,30 +67,127 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 //				"Bar.hbm.xml"
 		};
 	}
+
 	// If those mappings reside somewhere other than resources/org/hibernate/test, change this.
 	@Override
 	protected String getBaseForMappings() {
 		return "org/hibernate/test/";
 	}
 
-	// Add in any settings that are specific to your test.  See resources/hibernate.properties for the defaults.
 	@Override
 	protected void configure(Configuration configuration) {
 		super.configure( configuration );
 
 		configuration.setProperty( AvailableSettings.SHOW_SQL, Boolean.TRUE.toString() );
 		configuration.setProperty( AvailableSettings.FORMAT_SQL, Boolean.TRUE.toString() );
-		//configuration.setProperty( AvailableSettings.GENERATE_STATISTICS, "true" );
+
+		configuration.setProperty( AvailableSettings.DEFAULT_BATCH_FETCH_SIZE, "2" );
 	}
 
-	// Add your tests, using standard JUnit.
 	@Test
-	public void hhh123Test() throws Exception {
-		// BaseCoreFunctionalTestCase automatically creates the SessionFactory and provides the Session.
-		Session s = openSession();
-		Transaction tx = s.beginTransaction();
-		// Do stuff...
-		tx.commit();
-		s.close();
+	public void hhhXXXXTest() throws Exception {
+		try (Session s = openSession()) {
+			Transaction tx = s.beginTransaction();
+			EntityB entityB = new EntityB();
+			entityB.foo = 123;
+			s.persist( entityB );
+
+			EntityB entityB2 = new EntityB();
+			entityB2.foo = 321;
+			s.persist( entityB2 );
+
+			EntityA entityA1 = new EntityA();
+			entityA1.entityB = entityB;
+			s.persist( entityA1 );
+
+			EntityA entityA2 = new EntityA();
+			entityA2.entityB = entityB2;
+			s.persist( entityA2 );
+
+			s.flush();
+			s.clear();
+			tx.commit();
+
+			Query<MyPojo> query2 = s.createQuery(
+					"select new " + MyPojo.class.getName() + "(t) from EntityA t",
+					MyPojo.class
+			);
+			List<MyPojo> pojo = query2.list();
+			assertThat(pojo).isNotNull();
+//			assertThat( pojo.getFoo() ).isEqualTo( 123 );
+		}
+	}
+
+	@Test
+	public void hhhXXXXTest2() throws Exception {
+		try (Session s = openSession()) {
+			Transaction tx = s.beginTransaction();
+			EntityB entityB = new EntityB();
+			entityB.foo = 123;
+			s.persist( entityB );
+
+			EntityB entityB2 = new EntityB();
+			entityB2.foo = 321;
+			s.persist( entityB2 );
+
+			EntityA entityA1 = new EntityA();
+			entityA1.entityB = entityB;
+			s.persist( entityA1 );
+
+			EntityA entityA2 = new EntityA();
+			entityA2.entityB = entityB2;
+			s.persist( entityA2 );
+
+			s.flush();
+			s.clear();
+			tx.commit();
+
+			Query<EntityA> query2 = s.createQuery(
+					"select t from EntityA t",
+					EntityA.class
+			);
+			List<EntityA> pojo = query2.list();
+			assertThat(pojo).isNotNull();
+//			assertThat( pojo.getFoo() ).isEqualTo( 123 );
+		}
+	}
+
+	@Entity( name = "EntityA" )
+	public static class EntityA {
+		@Id
+		@GeneratedValue
+		private Integer id;
+
+		@JoinColumn( name = "entityb_id" )
+		@ManyToOne
+		// @Fetch( FetchMode.SELECT )
+		private EntityB entityB;
+	}
+
+	@Entity( name = "EntityB" )
+	public static class EntityB {
+		@Id
+		@GeneratedValue( strategy = GenerationType.AUTO )
+		@Column( name = "ID" )
+		private Integer id;
+
+		@Column( name = "FOO" )
+		private Integer foo;
+
+		@OneToMany( mappedBy = "entityB" )
+		@Fetch( FetchMode.SUBSELECT )
+		private List<EntityA> listOfEntitiesA = new ArrayList<>();
+	}
+
+	public static class MyPojo {
+		private final Integer foo;
+
+		public MyPojo(EntityA a) {
+			foo = a.entityB.foo;
+		}
+
+		public Integer getFoo() {
+			return foo;
+		}
 	}
 }
