@@ -15,12 +15,17 @@
  */
 package org.hibernate.bugs;
 
+import java.util.List;
+
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.query.Query;
+
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.junit.Test;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * This template demonstrates how to develop a test case for Hibernate ORM, using its built-in unit test framework.
@@ -35,11 +40,8 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 
 	// Add your entities here.
 	@Override
-	protected Class[] getAnnotatedClasses() {
-		return new Class[] {
-//				Foo.class,
-//				Bar.class
-		};
+	protected Class<?>[] getAnnotatedClasses() {
+		return new Class<?>[] { EntityA.class, EntityB.class, EntityC.class };
 	}
 
 	// If you use *.hbm.xml mappings, instead of annotations, add the mappings here.
@@ -68,12 +70,12 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 
 	// Add your tests, using standard JUnit.
 	@Test
-	public void hhh123Test() throws Exception {
-		// BaseCoreFunctionalTestCase automatically creates the SessionFactory and provides the Session.
-		Session s = openSession();
-		Transaction tx = s.beginTransaction();
-		// Do stuff...
-		tx.commit();
-		s.close();
+	public void hhh16543Test() throws Exception {
+		try (Session s = openSession()) {
+			Query<AbstractEntity> query = s.createQuery(
+					"select t from org.hibernate.bugs.AbstractEntity t where t.foo = 1", AbstractEntity.class);
+			List<AbstractEntity> actual = query.getResultList();
+			assertThat(actual).isEmpty();
+		}
 	}
 }
