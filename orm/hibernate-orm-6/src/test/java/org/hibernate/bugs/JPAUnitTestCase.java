@@ -1,5 +1,6 @@
 package org.hibernate.bugs;
 
+import java.time.YearMonth;
 import java.util.*;
 import jakarta.persistence.*;
 
@@ -30,8 +31,48 @@ public class JPAUnitTestCase {
 	public void hhh123Test() throws Exception {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
-		// Do stuff...
+
+		entityManager.persist( new ConvertedIdEntity( YearMonth.of( 2022, 12 ) ) );
+		entityManager.flush();
+		entityManager.clear();
+
+		final YearMonth max = entityManager.createQuery(
+				"select max(e.convertedId) from ConvertedIdEntity e",
+				YearMonth.class
+		).getSingleResult();
+
 		entityManager.getTransaction().commit();
 		entityManager.close();
+	}
+
+	@Entity( name = "ConvertedIdEntity" )
+	public static class ConvertedIdEntity {
+		@Convert( converter = YearMonthConverter.class )
+		@Id
+		private YearMonth convertedId;
+
+		public ConvertedIdEntity() {
+		}
+
+		public ConvertedIdEntity(YearMonth convertedId) {
+			this.convertedId = convertedId;
+		}
+
+		public YearMonth getConvertedId() {
+			return convertedId;
+		}
+	}
+
+	@Converter( autoApply = true )
+	public static class YearMonthConverter implements AttributeConverter<YearMonth, Integer> {
+		@Override
+		public Integer convertToDatabaseColumn(YearMonth attribute) {
+			return attribute == null ? null : ( attribute.getYear() * 100 ) + attribute.getMonth().getValue();
+		}
+
+		@Override
+		public YearMonth convertToEntityAttribute(Integer dbData) {
+			return dbData == null ? null : YearMonth.of( dbData / 100, dbData % 100 );
+		}
 	}
 }
