@@ -22,6 +22,11 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.junit.Test;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.Inheritance;
+import jakarta.persistence.InheritanceType;
+
 /**
  * This template demonstrates how to develop a test case for Hibernate ORM, using its built-in unit test framework.
  * Although ORMStandaloneTestCase is perfectly acceptable as a reproducer, usage of this class is much preferred.
@@ -37,8 +42,9 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	@Override
 	protected Class[] getAnnotatedClasses() {
 		return new Class[] {
-//				Foo.class,
-//				Bar.class
+				BaseEntity.class,
+				SubEntity.class,
+				MyEntity.class,
 		};
 	}
 
@@ -70,10 +76,60 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	@Test
 	public void hhh123Test() throws Exception {
 		// BaseCoreFunctionalTestCase automatically creates the SessionFactory and provides the Session.
-		Session s = openSession();
-		Transaction tx = s.beginTransaction();
-		// Do stuff...
+		Session session = openSession();
+		Transaction tx = session.beginTransaction();
+
+		session.persist( new MyEntity( 3L, "Vittorio", "Vitto" ) );
+
 		tx.commit();
-		s.close();
+		session.close();
+	}
+
+	@Entity( name = "BaseEntity" )
+	@Inheritance( strategy = InheritanceType.JOINED )
+	public static class BaseEntity {
+		@Id
+		private Long id;
+
+		public BaseEntity() {
+		}
+
+		public BaseEntity(Long id) {
+			this.id = id;
+		}
+	}
+
+	@Entity( name = "SubEntity" )
+	public static class SubEntity extends BaseEntity {
+		private String name;
+
+		public SubEntity() {
+		}
+
+		public SubEntity(Long id, String name) {
+			super( id );
+			this.name = name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+	}
+
+	@Entity( name = "MyEntity" )
+	public static class MyEntity extends SubEntity {
+		private String nickname;
+
+		public MyEntity() {
+		}
+
+		public MyEntity(Long id, String name, String nickname) {
+			super( id, name );
+			this.nickname = nickname;
+		}
+
+		public void setNickname(String nickname) {
+			this.nickname = nickname;
+		}
 	}
 }
