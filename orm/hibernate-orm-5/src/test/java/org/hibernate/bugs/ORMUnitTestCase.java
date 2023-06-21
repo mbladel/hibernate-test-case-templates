@@ -15,6 +15,12 @@
  */
 package org.hibernate.bugs;
 
+import javax.persistence.*;
+import java.io.Serializable;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.AvailableSettings;
@@ -37,8 +43,11 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	@Override
 	protected Class[] getAnnotatedClasses() {
 		return new Class[] {
-//				Foo.class,
-//				Bar.class
+				Parent.class,
+				ParentId.class,
+				Child1Id.class,
+				Child1.class,
+				Child2.class
 		};
 	}
 
@@ -50,6 +59,7 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 //				"Bar.hbm.xml"
 		};
 	}
+
 	// If those mappings reside somewhere other than resources/org/hibernate/test, change this.
 	@Override
 	protected String getBaseForMappings() {
@@ -63,6 +73,8 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 
 		configuration.setProperty( AvailableSettings.SHOW_SQL, Boolean.TRUE.toString() );
 		configuration.setProperty( AvailableSettings.FORMAT_SQL, Boolean.TRUE.toString() );
+		configuration.setProperty( AvailableSettings.ORDER_INSERTS, Boolean.TRUE.toString() );
+		configuration.setProperty( AvailableSettings.ORDER_UPDATES, Boolean.TRUE.toString() );
 		//configuration.setProperty( AvailableSettings.GENERATE_STATISTICS, "true" );
 	}
 
@@ -72,8 +84,102 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 		// BaseCoreFunctionalTestCase automatically creates the SessionFactory and provides the Session.
 		Session s = openSession();
 		Transaction tx = s.beginTransaction();
-		// Do stuff...
+
+		ParentId parentId = new ParentId( "id1" );
+		Child1Id child1Id1 = new Child1Id( parentId, 1 );
+		Child1Id child1Id2 = new Child1Id( parentId, 2 );
+
+		Parent parent = new Parent(
+				parentId,
+				Arrays.asList(
+						new Child1( child1Id1, Collections.emptyList() ),
+						new Child1( child1Id2, Collections.emptyList() )
+				)
+		);
+
+		s.persist( parent );
+
 		tx.commit();
 		s.close();
+	}
+
+	@Embeddable
+	public static class ParentId implements Serializable {
+		private String id;
+
+		public ParentId() {
+		}
+
+		public ParentId(String id) {
+			this.id = id;
+		}
+
+//		@Override
+//		public int compareTo(Object o) {
+//			if ( o instanceof ParentId ) {
+//				return id.compareTo( ( (ParentId) o ).id );
+//			}
+//
+//			return 0;
+//		}
+	}
+
+	@Entity( name = "Parent" )
+	public static class Parent {
+		@EmbeddedId
+		private ParentId parentId;
+
+		@OneToMany( cascade = CascadeType.ALL )
+		@JoinColumn( name = "id", referencedColumnName = "id" )
+		private List<Child1> child1s;
+
+		public Parent() {
+		}
+
+		public Parent(ParentId parentId, List<Child1> child1s) {
+			this.parentId = parentId;
+			this.child1s = child1s;
+		}
+	}
+
+	@Embeddable
+	public static class Child1Id implements Serializable {
+		@Embedded
+		private ParentId parentId;
+		private Integer version;
+
+		public Child1Id() {
+		}
+
+		public Child1Id(ParentId parentId, Integer version) {
+			this.parentId = parentId;
+			this.version = version;
+		}
+	}
+
+	@Entity( name = "Child1" )
+	public static class Child1 {
+		@EmbeddedId
+		private Child1Id child1Id;
+
+		@OneToMany( cascade = CascadeType.ALL )
+		@JoinColumn( name = "child1_id", referencedColumnName = "id" )
+		@JoinColumn( name = "child1_version", referencedColumnName = "version" )
+		private List<Child2> child2s;
+
+		public Child1() {
+		}
+
+		public Child1(Child1Id child1Id, List<Child2> child2s) {
+			this.child1Id = child1Id;
+			this.child2s = child2s;
+		}
+	}
+
+	@Entity( name = "Child2" )
+	public static class Child2 {
+		@Id
+		@GeneratedValue
+		private Long id;
 	}
 }
