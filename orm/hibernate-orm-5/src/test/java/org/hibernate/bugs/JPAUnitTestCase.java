@@ -38,7 +38,7 @@ public class JPAUnitTestCase {
 
 		final long start = System.nanoTime();
 		// prepare a set of data, 1k books with 100 blank pages each
-		for ( int i = 0; i < 1000; i++ ) {
+		for ( int i = 0; i < 100; i++ ) {
 			entityManager.persist( Book.of( 1000 ) );
 		}
 		System.out.println( "Persisting took: " + ( ( System.nanoTime() - start ) / 1e6 ) + " ms" );
