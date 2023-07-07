@@ -1,5 +1,6 @@
 package org.hibernate.bugs;
 
+import java.io.Serializable;
 import java.util.*;
 import javax.persistence.*;
 
@@ -29,14 +30,66 @@ public class JPAUnitTestCase {
 		entityManagerFactory.close();
 	}
 
-	// Entities are auto-discovered, so just add them anywhere on class-path
-	// Add your tests, using standard JUnit.
+	@Entity( name = "EntityA" )
+	public static class EntityA {
+		@Id
+		private Integer id;
+
+		@OneToMany
+//		@Fetch( FetchMode.JOIN )
+		@JoinColumn( name = "entityaid" )
+		private final List<EntityB> entityBList = new ArrayList<>();
+
+		public EntityA() {
+		}
+
+		public EntityA(Integer id) {
+			this.id = id;
+		}
+
+		public void addEntityB(final EntityB entityB) {
+			entityBList.add( entityB );
+		}
+	}
+
+	@Entity( name = "EntityB" )
+	public static class EntityB {
+
+		@EmbeddedId
+		private EmbeddedKey id = new EmbeddedKey();
+
+		public void setType(Integer entityAId, Integer type) {
+			id.entityAId = entityAId;
+			id.type = type;
+		}
+
+		@Embeddable
+		static class EmbeddedKey implements Serializable {
+			@Column( name = "entityaid", updatable = false )
+			private Integer entityAId;
+			@Column( name = "type", updatable = false )
+			private Integer type;
+		}
+	}
+
 	@Test
-	public void hhh123Test() throws Exception {
+	//Test method in test class
+	public void testDeleteEntityA() {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+		final EntityA entityA = new EntityA( 1 );
+		final EntityB entityB = new EntityB();
+		entityB.setType( 1, 5 );
+		entityA.addEntityB( entityB );
 		entityManager.getTransaction().begin();
-		// Do stuff...
+		entityManager.persist( entityA );
+		entityManager.persist( entityB );
 		entityManager.getTransaction().commit();
+
+		entityManager.getTransaction().begin();
+		entityManager.remove( entityA ); //Exception throwed here
+		entityManager.getTransaction().commit();
+
 		entityManager.close();
 	}
 }
