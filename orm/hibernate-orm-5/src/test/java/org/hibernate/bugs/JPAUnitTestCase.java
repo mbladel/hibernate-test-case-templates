@@ -7,6 +7,8 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * This template demonstrates how to develop a test case for Hibernate ORM, using the Java Persistence API.
  */
@@ -20,6 +22,10 @@ public class JPAUnitTestCase {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
 
+		Parent parent = new Parent();
+		parent.id = 1L;
+		entityManager.persist( parent );
+
 		entityManager.getTransaction().commit();
 		entityManager.close();
 	}
@@ -29,14 +35,66 @@ public class JPAUnitTestCase {
 		entityManagerFactory.close();
 	}
 
-	// Entities are auto-discovered, so just add them anywhere on class-path
-	// Add your tests, using standard JUnit.
 	@Test
-	public void hhh123Test() throws Exception {
+	public void testFindParentById() {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
-		// Do stuff...
+
+		Parent foundParent = entityManager.find( Parent.class, 1L );
+		assertThat( foundParent ).isNotNull();
+
 		entityManager.getTransaction().commit();
 		entityManager.close();
+	}
+
+	@Test
+	public void testQueryParentById() {
+		EntityManager entityManager = entityManagerFactory.createEntityManager();
+		entityManager.getTransaction().begin();
+
+		Parent parent = entityManager.createQuery( "select p from Parent p where p.id = :id", Parent.class )
+				.setParameter( "id", 1L )
+				.getSingleResult();
+
+		entityManager.getTransaction().commit();
+		entityManager.close();
+	}
+
+	@Entity( name = "Parent" )
+	public static class Parent {
+		@Id
+		Long id;
+		@OneToOne
+		Child child;
+		// Getter and setters omitted for brevity
+	}
+
+	@Entity( name = "Child" )
+	@Inheritance( strategy = InheritanceType.JOINED )
+	public static class Child {
+		@Id
+		Long id;
+		// Getter and setters omitted for brevity
+	}
+
+	@Entity( name = "ChildA" )
+	public static class ChildA extends Child {
+		@OneToOne
+		Something something;
+		// Getter and setters omitted for brevity
+	}
+
+	@Entity( name = "ChildB" )
+	public static class ChildB extends Child {
+		@OneToOne
+		Something something;
+		// Getter and setters omitted for brevity
+	}
+
+	@Entity( name = "Something" )
+	public static class Something {
+		@Id
+		Long id;
+		// Getter and setters omitted for brevity
 	}
 }
