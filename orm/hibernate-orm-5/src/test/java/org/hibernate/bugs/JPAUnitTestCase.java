@@ -53,8 +53,9 @@ public class JPAUnitTestCase {
 		// Other query related code...
 
 		// Start from a new root
-		Root<Member> newRoot = (Root<Member>) root.as(Member.class); // This line works in v5
-		Predicate where = cb.equal(newRoot.get("firstName"), "John");
+
+		root.as(SubMember.class); // This line works in v5
+		Predicate where = cb.equal(root.get("firstName"), "John");
 		personQuery.where(where);
 
 		personQuery.where(where);
