@@ -21,8 +21,6 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.junit.Assert;
 import org.junit.Test;
-import org.testcontainers.containers.OracleContainer;
-import org.testcontainers.utility.DockerImageName;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -78,17 +76,18 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	@Override
 	protected void configure(Configuration configuration) {
 		super.configure( configuration );
-		OracleContainer oracleContainer = new OracleContainer(DockerImageName.parse("gvenzl/oracle-xe:18-slim"));
-		oracleContainer.start();
+//		OracleContainer oracleContainer = new OracleContainer(DockerImageName.parse("gvenzl/oracle-xe:18-slim"));
+//		oracleContainer.start();
 
-		configuration.setProperty( "hibernate.connection.driver_class", oracleContainer.getDriverClassName());
+		configuration.setProperty( "hibernate.connection.driver_class", "oracle.jdbc.OracleDriver");
 		configuration.setProperty( "hibernate.dialect", "org.hibernate.dialect.OracleDialect");
-		configuration.setProperty( "hibernate.connection.url", oracleContainer.getJdbcUrl());
-		configuration.setProperty( "hibernate.connection.username", oracleContainer.getUsername());
-		configuration.setProperty( "hibernate.connection.password", oracleContainer.getPassword());
+		configuration.setProperty( "hibernate.connection.url", "jdbc:oracle:thin:@localhost:1521/freepdb1");
+		configuration.setProperty( "hibernate.connection.username", "hibernate_orm_test");
+		configuration.setProperty( "hibernate.connection.password", "hibernate_orm_test");
 
 		configuration.setProperty( AvailableSettings.SHOW_SQL, Boolean.TRUE.toString() );
 		configuration.setProperty( AvailableSettings.FORMAT_SQL, Boolean.TRUE.toString() );
+		configuration.setProperty( AvailableSettings.HIGHLIGHT_SQL, Boolean.TRUE.toString() );
 		configuration.setProperty( AvailableSettings.GENERATE_STATISTICS, "true" );
 	}
 
