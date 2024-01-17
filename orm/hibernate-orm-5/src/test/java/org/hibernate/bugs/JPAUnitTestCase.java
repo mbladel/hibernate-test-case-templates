@@ -1,7 +1,13 @@
 package org.hibernate.bugs;
 
-import java.util.*;
-import javax.persistence.*;
+import java.util.Arrays;
+import java.util.Collections;
+import javax.persistence.EntityManager;
+import javax.persistence.EntityManagerFactory;
+import javax.persistence.Persistence;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.Root;
 
 import org.junit.After;
 import org.junit.Before;
@@ -35,7 +41,20 @@ public class JPAUnitTestCase {
 	public void hhh123Test() throws Exception {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
-		// Do stuff...
+
+		final Account parent = new Account();
+		entityManager.persist( parent );
+
+		final Person user = new Person( parent );
+		parent.addChild( user );
+		// entityManager.persist( parent );
+
+		final CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+		final CriteriaQuery<Long> cq = cb.createQuery( Long.class );
+		final Root<Ticket> ticket = cq.from( Ticket.class );
+		cq.select( cb.count( ticket ) ).where( ticket.get( "owner" ).in( Collections.singletonList( user ) ) );
+		final Long result = entityManager.createQuery( cq ).getSingleResult();
+
 		entityManager.getTransaction().commit();
 		entityManager.close();
 	}
