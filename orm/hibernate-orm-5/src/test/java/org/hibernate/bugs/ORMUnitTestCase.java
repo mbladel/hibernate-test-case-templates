@@ -15,10 +15,21 @@
  */
 package org.hibernate.bugs;
 
+import javax.persistence.ConstraintMode;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.Inheritance;
+import javax.persistence.InheritanceType;
+import javax.persistence.JoinColumn;
+import javax.persistence.ManyToOne;
+import javax.persistence.PrimaryKeyJoinColumn;
+
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.cfg.Environment;
+
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.junit.Test;
 
@@ -27,7 +38,7 @@ import org.junit.Test;
  * Although ORMStandaloneTestCase is perfectly acceptable as a reproducer, usage of this class is much preferred.
  * Since we nearly always include a regression test with bug fixes, providing your reproducer using this method
  * simplifies the process.
- *
+ * <p>
  * What's even better?  Fork hibernate-orm itself, add your test case directly to a module's unit tests, then
  * submit it as a PR!
  */
@@ -37,8 +48,8 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	@Override
 	protected Class[] getAnnotatedClasses() {
 		return new Class[] {
-//				Foo.class,
-//				Bar.class
+				TestEntity.class,
+				ChildEntity.class,
 		};
 	}
 
@@ -50,6 +61,7 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 //				"Bar.hbm.xml"
 		};
 	}
+
 	// If those mappings reside somewhere other than resources/org/hibernate/test, change this.
 	@Override
 	protected String getBaseForMappings() {
@@ -63,7 +75,8 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 
 		configuration.setProperty( AvailableSettings.SHOW_SQL, Boolean.TRUE.toString() );
 		configuration.setProperty( AvailableSettings.FORMAT_SQL, Boolean.TRUE.toString() );
-		//configuration.setProperty( AvailableSettings.GENERATE_STATISTICS, "true" );
+		configuration.setProperty( AvailableSettings.HIGHLIGHT_SQL, Boolean.TRUE.toString() );
+		configuration.setProperty( Environment.HBM2DDL_DEFAULT_CONSTRAINT_MODE, ConstraintMode.NO_CONSTRAINT.name() );
 	}
 
 	// Add your tests, using standard JUnit.
@@ -75,5 +88,26 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 		// Do stuff...
 		tx.commit();
 		s.close();
+	}
+
+	@Entity( name = "TestEntity" )
+	@javax.persistence.Table( name = "TestEntity" )
+	@Inheritance( strategy = InheritanceType.JOINED )
+	public static class TestEntity {
+
+		@Id
+		private Long id;
+
+		@ManyToOne
+		@JoinColumn
+		private TestEntity mate;
+
+	}
+
+	@Entity( name = "ChildEntity" )
+	@javax.persistence.Table( name = "ChildEntity" )
+	 @PrimaryKeyJoinColumn
+	public static class ChildEntity extends TestEntity {
+		private String childName;
 	}
 }
