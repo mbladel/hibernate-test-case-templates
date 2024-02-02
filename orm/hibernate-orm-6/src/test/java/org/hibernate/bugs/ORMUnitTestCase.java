@@ -15,19 +15,35 @@
  */
 package org.hibernate.bugs;
 
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import org.hibernate.Session;
-import org.hibernate.Transaction;
 import org.hibernate.cfg.AvailableSettings;
 import org.hibernate.cfg.Configuration;
+import org.hibernate.graph.GraphSemantic;
+import org.hibernate.graph.RootGraph;
+
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
 import org.junit.Test;
+
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityGraph;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * This template demonstrates how to develop a test case for Hibernate ORM, using its built-in unit test framework.
  * Although ORMStandaloneTestCase is perfectly acceptable as a reproducer, usage of this class is much preferred.
  * Since we nearly always include a regression test with bug fixes, providing your reproducer using this method
  * simplifies the process.
- *
+ * <p>
  * What's even better?  Fork hibernate-orm itself, add your test case directly to a module's unit tests, then
  * submit it as a PR!
  */
@@ -36,20 +52,9 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 	// Add your entities here.
 	@Override
 	protected Class[] getAnnotatedClasses() {
-		return new Class[] {
-//				Foo.class,
-//				Bar.class
-		};
+		return new Class[] { Book.class, Author.class };
 	}
 
-	// If you use *.hbm.xml mappings, instead of annotations, add the mappings here.
-	@Override
-	protected String[] getMappings() {
-		return new String[] {
-//				"Foo.hbm.xml",
-//				"Bar.hbm.xml"
-		};
-	}
 	// If those mappings reside somewhere other than resources/org/hibernate/test, change this.
 	@Override
 	protected String getBaseForMappings() {
@@ -66,14 +71,158 @@ public class ORMUnitTestCase extends BaseCoreFunctionalTestCase {
 		//configuration.setProperty( AvailableSettings.GENERATE_STATISTICS, "true" );
 	}
 
-	// Add your tests, using standard JUnit.
+	public List<Author> createEntities() {
+		final Author author1 = new Author();
+		author1.setName( "Author1" );
+
+		final Book book1 = new Book();
+		book1.setTitle( "Book 1" );
+		book1.setPages( 50 );
+		author1.addBook( book1 );
+
+		final Book book2 = new Book();
+		book2.setTitle( "Book 2" );
+		book2.setPages( 20 );
+		author1.addBook( book2 );
+
+		final Author author2 = new Author();
+		author2.setName( "Author2" );
+		return List.of( author2, author1 );
+	}
+
 	@Test
-	public void hhh123Test() throws Exception {
-		// BaseCoreFunctionalTestCase automatically creates the SessionFactory and provides the Session.
-		Session s = openSession();
-		Transaction tx = s.beginTransaction();
-		// Do stuff...
-		tx.commit();
-		s.close();
+	public void testMaxResultsWithEntityGraph() {
+		test( "FROM Author a WHERE a.name LIKE :name ORDER BY a.name" );
+	}
+
+	@Test
+	public void testWorkingApproach() {
+		test( "FROM Author a left join fetch a.books WHERE a.name LIKE :name ORDER BY a.name" );
+	}
+
+	private void test(String query) {
+		try (final Session s = openSession()) {
+			s.beginTransaction();
+			for ( final Author author : createEntities() ) {
+				s.persist( author );
+			}
+			s.getTransaction().commit();
+		}
+		Author author = null;
+		try (final Session s = openSession()) {
+			s.beginTransaction();
+			author = s
+					.createQuery( query, Author.class )
+					.setParameter( "name", "Author%" )
+					.setMaxResults( 1 )
+					.setEntityGraph( createEntityGraph( s ), GraphSemantic.LOAD )
+					.getSingleResult();
+			s.getTransaction().commit();
+		}
+		assertThat( author.getBooks() ).hasSize( 2 );
+	}
+
+	private EntityGraph<Author> createEntityGraph(Session session) {
+		final RootGraph<Author> rootGraph = session.createEntityGraph( Author.class );
+		rootGraph.addAttributeNode( "books" );
+		return rootGraph;
+	}
+
+	@Entity( name = "Author" )
+	public static class Author {
+		@Id
+		@GeneratedValue
+		private Long id;
+
+		private String name;
+
+		@OneToMany( cascade = CascadeType.ALL, mappedBy = "author" )
+		private Set<Book> books = new HashSet<>();
+
+		public Long getId() {
+			return id;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+
+		public Set<Book> getBooks() {
+			return books;
+		}
+
+		public void setBooks(Set<Book> books) {
+			this.books = books;
+		}
+
+		public void addBook(Book book) {
+			books.add( book );
+			book.author = this;
+		}
+
+		@Override
+		public String toString() {
+			return id + ":" + name;
+		}
+	}
+
+	@Entity( name = "Book" )
+	public static class Book {
+
+		@Id
+		@GeneratedValue
+		private Long id;
+
+		private String title;
+
+		private int pages;
+
+		@ManyToOne
+		private Author author;
+
+		public Long getId() {
+			return id;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public String getTitle() {
+			return title;
+		}
+
+		public void setTitle(String title) {
+			this.title = title;
+		}
+
+		public int getPages() {
+			return pages;
+		}
+
+		public void setPages(int pages) {
+			this.pages = pages;
+		}
+
+		public Author getAuthor() {
+			return author;
+		}
+
+		public void setAuthor(Author author) {
+			this.author = author;
+		}
+
+		@Override
+		public String toString() {
+			return id + ":" + title + ":" + pages;
+		}
 	}
 }
