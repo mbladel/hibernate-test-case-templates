@@ -58,9 +58,9 @@
 							<base>${project.build.testOutputDirectory}</base>
 							<dir>${project.build.testOutputDirectory}</dir>
 							<enableAssociationManagement>false</enableAssociationManagement>
-							<enableDirtyTracking>false</enableDirtyTracking>
+							<enableDirtyTracking>true</enableDirtyTracking>
 							<enableExtendedEnhancement>false</enableExtendedEnhancement>
-							<enableLazyInitialization>false</enableLazyInitialization>
+							<enableLazyInitialization>true</enableLazyInitialization>
 						</configuration>
 						<phase>test-compile</phase>
 						<goals>
