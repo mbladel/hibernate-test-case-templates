@@ -9,6 +9,7 @@ import org.junit.Test;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Persistence;
@@ -48,8 +49,8 @@ public class JPAUnitTestCase {
 		final CriteriaQuery<EntityA> query = builder.createQuery( EntityA.class );
 		final Root<EntityA> root = query.from( EntityA.class );
 
-		root.fetch( "entityB", JoinType.INNER ).fetch( "entityB", JoinType.LEFT );
 		root.fetch( "entityB", JoinType.INNER ).fetch( "entityC", JoinType.LEFT );
+		root.fetch( "entityB", JoinType.INNER ).fetch( "entityD", JoinType.LEFT );
 
 		final List<EntityA> results = entityManager.createQuery( query ).getResultList();
 
@@ -62,8 +63,20 @@ public class JPAUnitTestCase {
 		@Id
 		private Long id;
 
-		@ManyToOne
+		@ManyToOne( fetch = FetchType.LAZY )
 		private EntityB entityB;
+
+		public EntityA() {
+		}
+
+		public EntityA(Long id, EntityB entityB) {
+			this.id = id;
+			this.entityB = entityB;
+		}
+
+		public EntityB getEntityB() {
+			return entityB;
+		}
 	}
 
 	@Entity( name = "EntityB" )
@@ -71,16 +84,59 @@ public class JPAUnitTestCase {
 		@Id
 		private Long id;
 
-		@ManyToOne
-		private EntityB entityB;
+		@ManyToOne( fetch = FetchType.LAZY )
+		private EntityC entityC;
 
 		@ManyToOne
-		private EntityC entityC;
+		private EntityD entityD;
+
+		public EntityB() {
+		}
+
+		public EntityB(Long id, EntityC entityC, EntityD entityD) {
+			this.id = id;
+			this.entityC = entityC;
+			this.entityD = entityD;
+		}
+
+		public EntityD getEntityD() {
+			return entityD;
+		}
+
+		public EntityC getEntityC() {
+			return entityC;
+		}
 	}
 
 	@Entity( name = "EntityC" )
 	public static class EntityC {
 		@Id
 		private Long id;
+
+		private String name;
+
+		public EntityC() {
+		}
+
+		public EntityC(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
+	}
+
+	@Entity( name = "EntityD" )
+	public static class EntityD {
+		@Id
+		private Long id;
+
+		private String name;
+
+		public EntityD() {
+		}
+
+		public EntityD(Long id, String name) {
+			this.id = id;
+			this.name = name;
+		}
 	}
 }
