@@ -1,11 +1,19 @@
 package org.hibernate.bugs;
 
-import java.util.*;
-import jakarta.persistence.*;
+import java.util.List;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Persistence;
+import jakarta.persistence.criteria.CriteriaBuilder;
+import jakarta.persistence.criteria.*;
 
 /**
  * This template demonstrates how to develop a test case for Hibernate ORM, using the Java Persistence API.
@@ -35,8 +43,44 @@ public class JPAUnitTestCase {
 	public void hhh123Test() throws Exception {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
-		// Do stuff...
+
+		final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		final CriteriaQuery<EntityA> query = builder.createQuery( EntityA.class );
+		final Root<EntityA> root = query.from( EntityA.class );
+
+		root.fetch( "entityB", JoinType.INNER ).fetch( "entityB", JoinType.LEFT );
+		root.fetch( "entityB", JoinType.INNER ).fetch( "entityC", JoinType.LEFT );
+
+		final List<EntityA> results = entityManager.createQuery( query ).getResultList();
+
 		entityManager.getTransaction().commit();
 		entityManager.close();
+	}
+
+	@Entity( name = "EntityA" )
+	public static class EntityA {
+		@Id
+		private Long id;
+
+		@ManyToOne
+		private EntityB entityB;
+	}
+
+	@Entity( name = "EntityB" )
+	public static class EntityB {
+		@Id
+		private Long id;
+
+		@ManyToOne
+		private EntityB entityB;
+
+		@ManyToOne
+		private EntityC entityC;
+	}
+
+	@Entity( name = "EntityC" )
+	public static class EntityC {
+		@Id
+		private Long id;
 	}
 }
