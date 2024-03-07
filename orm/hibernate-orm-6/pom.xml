@@ -13,11 +13,19 @@
 		<version.org.hibernate>6.4.4.Final</version.org.hibernate>
 	</properties>
 
+	<repositories>
+		<repository>
+			<id>hibernate-snapshots</id>
+			<name>Hibernate snapshots</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.hibernate.orm</groupId>
 			<artifactId>hibernate-core</artifactId>
-			<version>${version.org.hibernate}</version>
+			<version>6.4.5-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.hibernate.orm</groupId>
