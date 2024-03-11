@@ -1,6 +1,10 @@
 package org.hibernate.bugs;
 
 import java.util.*;
+
+import org.hibernate.bugs.model.Cat;
+import org.hibernate.bugs.model.Leg;
+
 import jakarta.persistence.*;
 import jakarta.persistence.criteria.*;
 
@@ -34,10 +38,36 @@ public class JPAUnitTestCase {
 	// Add your tests, using standard JUnit.
 	@Test
 	public void hhh123Test() throws Exception {
-		EntityManager entityManager = entityManagerFactory.createEntityManager();
+		final EntityManager entityManager = entityManagerFactory.createEntityManager();
+
+		final long catId = createContents( entityManager );
+
 		entityManager.getTransaction().begin();
-		// Do stuff...
+
+		final List<Leg> resultList = entityManager.createQuery(
+				"SELECT leg FROM Cat cat JOIN cat.legs leg",
+				Leg.class
+		).getResultList();
+
+		System.err.println( "Found legs: " + resultList.size() );
+
 		entityManager.getTransaction().commit();
 		entityManager.close();
+	}
+
+	private static long createContents(EntityManager entityManager) {
+		entityManager.getTransaction().begin();
+
+		final Leg owner = new Leg();
+
+		final Cat cat = new Cat();
+		cat.addToLegs( owner );
+		entityManager.persist( owner );
+		entityManager.persist( cat );
+
+		entityManager.getTransaction().commit();
+
+		return cat.getId();
+
 	}
 }
