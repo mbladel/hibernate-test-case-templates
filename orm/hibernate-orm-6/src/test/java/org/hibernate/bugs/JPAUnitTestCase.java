@@ -72,6 +72,30 @@ public class JPAUnitTestCase {
 		).setHint( HINT_SPEC_FETCH_GRAPH, graph );
 		final List<Author> authors = query.getResultList();
 
+		assertThat( authors ).hasSize( 2 );
+		for ( final Author author : authors ) {
+			assertThat( author.books ).hasSize( 2 );
+		}
+
+		entityManager.getTransaction().commit();
+		entityManager.close();
+	}
+
+	@Test
+	public void shouldWorkTest() throws Exception {
+		final EntityManager entityManager = entityManagerFactory.createEntityManager();
+		entityManager.getTransaction().begin();
+
+		final EntityGraph<Author> graph = entityManager.createEntityGraph( Author.class );
+		graph.addAttributeNodes( "books" );
+		final TypedQuery<Author> query = entityManager.createQuery(
+				"from Author a left join fetch a.books where a.id in (select a.id from Author a2 where element(a2.books).id in (1,3))",
+				Author.class
+//		).setHint( HINT_SPEC_FETCH_GRAPH, graph );
+		);
+		final List<Author> authors = query.getResultList();
+
+		assertThat( authors ).hasSize( 2 );
 		for ( final Author author : authors ) {
 			assertThat( author.books ).hasSize( 2 );
 		}
