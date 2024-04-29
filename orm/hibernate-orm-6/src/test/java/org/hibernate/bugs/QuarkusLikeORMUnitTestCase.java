@@ -24,7 +24,6 @@ import org.hibernate.cfg.Configuration;
 import org.hibernate.id.SequenceMismatchStrategy;
 import org.hibernate.id.enhanced.StandardOptimizerDescriptor;
 import org.hibernate.loader.BatchFetchStyle;
-import org.hibernate.query.NullPrecedence;
 
 import org.hibernate.testing.bytecode.enhancement.BytecodeEnhancerRunner;
 import org.hibernate.testing.junit4.BaseCoreFunctionalTestCase;
@@ -64,7 +63,6 @@ public class QuarkusLikeORMUnitTestCase extends BaseCoreFunctionalTestCase {
 		configuration.setProperty( AvailableSettings.DEFAULT_BATCH_FETCH_SIZE, "16" );
 		configuration.setProperty( AvailableSettings.BATCH_FETCH_STYLE, BatchFetchStyle.PADDED.toString() );
 		configuration.setProperty( AvailableSettings.QUERY_PLAN_CACHE_MAX_SIZE, "2048" );
-		configuration.setProperty( AvailableSettings.DEFAULT_NULL_ORDERING, NullPrecedence.NONE.toString().toLowerCase( Locale.ROOT) );
 		configuration.setProperty( AvailableSettings.IN_CLAUSE_PARAMETER_PADDING, "true" );
 		configuration.setProperty( AvailableSettings.SEQUENCE_INCREMENT_SIZE_MISMATCH_STRATEGY, SequenceMismatchStrategy.NONE.toString() );
 
