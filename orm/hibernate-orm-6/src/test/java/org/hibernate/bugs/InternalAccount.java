@@ -16,9 +16,4 @@ public class InternalAccount extends Account {
         super(id, loginName);
         this.setAuthType("internal");
     }
-
-    public InternalAccount(String id, String loginName, User user) {
-        super(id, loginName, user);
-        this.setAuthType("internal");
-    }
 }

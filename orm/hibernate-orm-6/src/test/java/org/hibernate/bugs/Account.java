@@ -26,11 +26,6 @@ public abstract class Account extends Grantee {
     @Column(name = "STATE", nullable = false)
     public String state;
 
-    @ManyToOne(fetch = FetchType.LAZY, targetEntity = User.class)
-    @Fetch(FetchMode.SELECT)
-    @JoinColumn(name = "USER_ID", nullable = false)
-    private User user;
-
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "account", cascade = CascadeType.ALL, targetEntity =
             DomainAccount.class)
     @Cache(usage = CacheConcurrencyStrategy.READ_WRITE)
@@ -52,22 +47,8 @@ public abstract class Account extends Grantee {
         this.domainAccounts = new HashSet<>();
     }
 
-    public Account(String id, String name, User user) {
-        super(id);
-        this.setGranteeType("U");
-        this.setAuthType("none");
-        this.name = name;
-        this.state = "O";
-        this.user = user;
-        this.domainAccounts = new HashSet<>();
-    }
-
     public String getLoginName() {
         return name;
-    }
-
-    public User getUser() {
-        return user;
     }
 
     public Set<DomainAccount> getDomainAccounts() {

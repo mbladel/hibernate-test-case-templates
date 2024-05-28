@@ -2,6 +2,8 @@ package org.hibernate.bugs;
 
 import java.util.List;
 
+import org.hibernate.SessionFactory;
+
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,8 +41,6 @@ public class JPAUnitTestCase {
 //            session.persist(user2);
 //            User user3 = new User("USER_ID_C", "Doe", "Helga");
 //            session.persist(user3);
-		User user4 = new User( "USER_ID_D", "Doe", "Hugo" );
-		entityManager.persist( user4 );
 
 //            DatabaseAccount acc1 = new DatabaseAccount("A", "DB_A", user1);
 //            session.persist(acc1);
@@ -48,14 +48,12 @@ public class JPAUnitTestCase {
 //            session.persist(acc2);
 //            DatabaseAccount acc3 = new DatabaseAccount("C", "DB_C", user3);
 //            session.persist(acc3);
-		InternalAccount acc4 = new InternalAccount( "D", "INT_D", user4 );
+		InternalAccount acc4 = new InternalAccount( "D", "INT_D" );
 		acc4.getDomainAccounts().add( domainAccount4 );
 		entityManager.persist( acc4 );
 
 //            TestEntity e1 = new TestEntity("A", "Entity_A", acc2);
 //            session.persist(e1);
-		TestEntity e2 = new TestEntity( "B", "Entity_B", acc4 );
-		entityManager.persist( e2 );
 
 		entityManager.getTransaction().commit();
 		entityManager.close();
@@ -96,7 +94,6 @@ public class JPAUnitTestCase {
 //				.setCacheRegion(Grantee.class.getSimpleName() + ".QUERYCACHE")
 				.getSingleResult();
 		assertEquals( NAME, entity.getLoginName() );
-		assertNotNull( entity.getUser() );
 		assertTrue( entity.hasDomainAccounts() );
 	}
 
@@ -110,13 +107,17 @@ public class JPAUnitTestCase {
 //		final StatisticsImplementor statistics = scope.getSessionFactory().getStatistics();
 //		statistics.clear();
 
+		entityManagerFactory.unwrap( SessionFactory.class ).getCache().evictQueryRegions();
+
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
 
 //		scope.inTransaction(session -> {
-		executeQueryElementFindAll( entityManager );
-		executeQueryAccountFindAll( entityManager );
+		// executeQueryElementFindAll( entityManager );
+		// entityManager.find( Account.class, "D" );
+		// executeQueryAccountFindAll( entityManager );
 //		});
+		executeQueryByGivenName( entityManager );
 		entityManager.getTransaction().commit();
 		entityManager.close();
 
@@ -131,9 +132,5 @@ public class JPAUnitTestCase {
 //		});
 		entityManager.getTransaction().commit();
 		entityManager.close();
-	}
-
-	private void executeQueryElementFindAll(EntityManager session) {
-		session.createQuery( ENTITYQUERY, TestEntity.class ).getResultList();
 	}
 }
