@@ -10,8 +10,16 @@
 	<properties>
 		<version.com.h2database>2.2.224</version.com.h2database>
 		<version.junit>4.13.2</version.junit>
-		<version.org.hibernate.orm>6.5.2.Final</version.org.hibernate.orm>
+		<version.org.hibernate.orm>6.6.0-SNAPSHOT</version.org.hibernate.orm>
 	</properties>
+
+	<repositories>
+		<repository>
+			<id>hibernate-snapshots</id>
+			<name>Hibernate snapshots</name>
+			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
+		</repository>
+	</repositories>
 
 	<dependencyManagement>
 		<dependencies>
