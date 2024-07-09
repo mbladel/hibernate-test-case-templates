@@ -44,58 +44,52 @@ public class JPAUnitTestCase {
 		entityManager.getTransaction().begin();
 
 		entityManager.createQuery(
-				"select ef from BugEquipmentFeature ef" +
-						"left outer join fetch ef.id.feature f" +
-						"left outer join fetch f.id.equipmentClass", BugEquipmentFeature.class ).getResultList();
+				"select b from EntityB b " +
+						"join fetch b.id.entityC c " +
+						"join fetch c.id.entityA", EntityB.class ).getResultList();
 
 		entityManager.getTransaction().commit();
 		entityManager.close();
 	}
 
-	@Entity( name = "BugEquipment" )
-	static class BugEquipment {
-		@Id
-		private Long id;
-	}
-
-	@Entity( name = "BugEquipmentClass" )
-	static class BugEquipmentClass {
+	@Entity( name = "EntityA" )
+	static class EntityA {
 		@Id
 		private String id;
 	}
 
-	@Entity( name = "BugEquipmentFeature" )
-	static class BugEquipmentFeature {
+	@Entity( name = "EntityB" )
+	static class EntityB {
 		@EmbeddedId
-		private BugEquipmentFeatureId id;
+		private EntityBId id;
 	}
 
 	@Embeddable
-	static class BugEquipmentFeatureId {
-		@ManyToOne( cascade = {},        // cascade nothing
-				fetch = FetchType.LAZY,
-				optional = false )
-		private BugEquipment equipment;
+	static class EntityBId {
+		@ManyToOne( fetch = FetchType.LAZY )
+		private EntityC entityC;
 
-		@ManyToOne( cascade = {},        // cascade nothing
-				fetch = FetchType.LAZY,
-				optional = false )
-		private BugFeature feature;
+		@ManyToOne( fetch = FetchType.LAZY )
+		private AnotherEntity anotherEntity;
 	}
 
-	@Entity( name = "BugFeature" )
-	static class BugFeature {
+	@Entity( name = "EntityC" )
+	static class EntityC {
 		@EmbeddedId
-		private BugFeatureId id;
+		private EntityCId id;
 	}
 
 	@Embeddable
-	static class BugFeatureId {
-		@ManyToOne( cascade = {},        // cascade nothing
-				fetch = FetchType.LAZY,
-				optional = false )
-		private BugEquipmentClass equipmentClass;
+	static class EntityCId {
+		@ManyToOne( fetch = FetchType.LAZY )
+		private EntityA entityA;
 
 		private String featureName;
+	}
+
+	@Entity( name = "UnusedEntity" )
+	static class AnotherEntity {
+		@Id
+		private Long id;
 	}
 }
