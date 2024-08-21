@@ -42,24 +42,24 @@ class JPAUnitTestCase {
     void hhh18502Test_SqmSubQuery_In_Collection() throws Exception {
         createSomeEntity();
 
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
 
-        CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-		CriteriaQuery<SomeEntity> query = builder.createQuery(SomeEntity.class);
+        final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		final CriteriaQuery<SomeEntity> query = builder.createQuery( SomeEntity.class);
 
-		Subquery<String> subquery = query.subquery(String.class);
-		Root<SomeEntity> subRoot = subquery.from(SomeEntity.class);
-		Path<String> subPathName = subRoot.get("name");
+		final Subquery<String> subquery = query.subquery( String.class);
+		final Root<SomeEntity> subRoot = subquery.from( SomeEntity.class);
+		final Path<String> subPathName = subRoot.get( "name");
 		subquery.select(subPathName);
 
-		Root<SomeEntity> root = query.from(SomeEntity.class);
+		final Root<SomeEntity> root = query.from( SomeEntity.class);
 		query.select(root);
 		// This line is the only difference between this test and hhh18502Test_SqmSubQuery_In_Array
 		query.where(subquery.in(List.of("some_name", "another_name")));
 
-		TypedQuery<SomeEntity> typedQuery = entityManager.createQuery(query);
-		List<SomeEntity> resultList = typedQuery.getResultList();
+		final TypedQuery<SomeEntity> typedQuery = entityManager.createQuery( query);
+		final List<SomeEntity> resultList = typedQuery.getResultList();
 		assertEquals(1, resultList.size());
 
         entityManager.getTransaction().commit();
@@ -70,24 +70,24 @@ class JPAUnitTestCase {
 	void hhh18502Test_SqmSubQuery_In_Array() throws Exception {
 		createSomeEntity();
 
-		EntityManager entityManager = entityManagerFactory.createEntityManager();
+		final EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
 
-		CriteriaBuilder builder = entityManager.getCriteriaBuilder();
-		CriteriaQuery<SomeEntity> query = builder.createQuery(SomeEntity.class);
+		final CriteriaBuilder builder = entityManager.getCriteriaBuilder();
+		final CriteriaQuery<SomeEntity> query = builder.createQuery( SomeEntity.class);
 
-		Subquery<String> subquery = query.subquery(String.class);
-		Root<SomeEntity> subRoot = subquery.from(SomeEntity.class);
-		Path<String> subPathName = subRoot.get("name");
+		final Subquery<String> subquery = query.subquery( String.class);
+		final Root<SomeEntity> subRoot = subquery.from( SomeEntity.class);
+		final Path<String> subPathName = subRoot.get( "name");
 		subquery.select(subPathName);
 
-		Root<SomeEntity> root = query.from(SomeEntity.class);
+		final Root<SomeEntity> root = query.from( SomeEntity.class);
 		query.select(root);
 		// This line is the only difference between this test and hhh18502Test_SqmSubQuery_In_Collection
 		query.where(subquery.in(new Object[] {"some_name", "another_name" }));
 
-		TypedQuery<SomeEntity> typedQuery = entityManager.createQuery(query);
-		List<SomeEntity> resultList = typedQuery.getResultList();
+		final TypedQuery<SomeEntity> typedQuery = entityManager.createQuery( query);
+		final List<SomeEntity> resultList = typedQuery.getResultList();
 		assertEquals(1, resultList.size());
 
 		entityManager.getTransaction().commit();
@@ -95,9 +95,9 @@ class JPAUnitTestCase {
 	}
 
 	private void createSomeEntity() {
-        EntityManager entityManager = entityManagerFactory.createEntityManager();
+        final EntityManager entityManager = entityManagerFactory.createEntityManager();
         entityManager.getTransaction().begin();
-        SomeEntity entity = new SomeEntity();
+        final SomeEntity entity = new SomeEntity();
 		entity.setName("some_name");
         entityManager.persist(entity);
         entityManager.getTransaction().commit();
