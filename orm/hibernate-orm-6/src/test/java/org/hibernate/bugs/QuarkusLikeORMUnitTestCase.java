@@ -17,7 +17,6 @@ package org.hibernate.bugs;
 
 import org.hibernate.cfg.AvailableSettings;
 
-import org.hibernate.testing.bytecode.enhancement.extension.BytecodeEnhanced;
 import org.hibernate.testing.orm.junit.DomainModel;
 import org.hibernate.testing.orm.junit.ServiceRegistry;
 import org.hibernate.testing.orm.junit.SessionFactory;
@@ -60,14 +59,13 @@ import org.junit.jupiter.api.Test;
 		}
 )
 @SessionFactory
-@BytecodeEnhanced
 class QuarkusLikeORMUnitTestCase {
 
 	// Add your tests, using standard JUnit.
-	@Test
-	void hhh123Test(SessionFactoryScope scope) throws Exception {
-		scope.inTransaction( session -> {
-			// Do stuff...
-		} );
-	}
+//	@Test
+//	void hhh123Test(SessionFactoryScope scope) throws Exception {
+//		scope.inTransaction( session -> {
+//			// Do stuff...
+//		} );
+//	}
 }
