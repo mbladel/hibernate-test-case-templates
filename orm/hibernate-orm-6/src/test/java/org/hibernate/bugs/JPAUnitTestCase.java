@@ -41,7 +41,9 @@ class JPAUnitTestCase {
 	void hhh123Test() throws Exception {
 		EntityManager entityManager = entityManagerFactory.createEntityManager();
 		entityManager.getTransaction().begin();
-		// Do stuff...
+
+		entityManager.createQuery( "from UserImpl", UserImpl.class ).getResultList();
+
 		entityManager.getTransaction().commit();
 		entityManager.close();
 	}
