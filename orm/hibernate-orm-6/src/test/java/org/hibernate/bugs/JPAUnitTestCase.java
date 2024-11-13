@@ -1,16 +1,19 @@
 package org.hibernate.bugs;
 
-import java.util.*;
-
-import jakarta.persistence.*;
-import jakarta.persistence.criteria.*;
+import java.time.Instant;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Embeddable;
+import jakarta.persistence.Embedded;
+import jakarta.persistence.Entity;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Persistence;
 
 /**
@@ -44,5 +47,37 @@ class JPAUnitTestCase {
 		// Do stuff...
 		entityManager.getTransaction().commit();
 		entityManager.close();
+	}
+
+	@Entity(name = "TestEntity")
+	static class TestEntity {
+		@Id
+		private Long id;
+
+		@Embedded
+		private AuditInfo auditInfo;
+	}
+
+	@MappedSuperclass
+	static class VersionBase {
+		@Column(name = "version_col")
+		Long version;
+	}
+
+	@Embeddable
+	static class VersionInfo extends VersionBase {
+		Instant versionDate;
+	}
+
+	@MappedSuperclass
+	static class AuditBase {
+		Instant creationDate;
+		VersionInfo version;
+	}
+
+	@Embeddable
+	static class AuditInfo extends AuditBase {
+		@Column(name = "user_col")
+		String user;
 	}
 }
