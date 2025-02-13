@@ -15,6 +15,9 @@
  */
 package org.hibernate.bugs;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hibernate.cfg.AvailableSettings;
 
 import org.hibernate.testing.bytecode.enhancement.CustomEnhancementContext;
@@ -26,6 +29,13 @@ import org.hibernate.testing.orm.junit.SessionFactoryScope;
 import org.hibernate.testing.orm.junit.Setting;
 import org.junit.jupiter.api.Test;
 
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.NamedQuery;
+import jakarta.persistence.OneToMany;
+
 /**
  * This template demonstrates how to develop a test case for Hibernate ORM, using its built-in unit test framework.
  * <p>
@@ -34,9 +44,8 @@ import org.junit.jupiter.api.Test;
  */
 @DomainModel(
 		annotatedClasses = {
-				// Add your entities here, e.g.:
-				// Foo.class,
-				// Bar.class
+				QuarkusLikeORMUnitTestCase.EntityA.class,
+				QuarkusLikeORMUnitTestCase.EntityB.class,
 		}
 )
 @ServiceRegistry(
@@ -69,7 +78,42 @@ class QuarkusLikeORMUnitTestCase {
 	@Test
 	void hhh123Test(SessionFactoryScope scope) throws Exception {
 		scope.inTransaction( session -> {
-			// Do stuff...
+			final EntityB b1 = new EntityB();
+			b1.id = 1L;
+			final EntityB b2 = new EntityB();
+			b2.id = 2L;
+			final EntityA entityA = new EntityA();
+			entityA.id = 1L;
+			entityA.members.addAll( List.of( b1, b2 ) );
+			session.persist( entityA );
+
+			session.flush();
+
+			entityA.members.remove( 1 );
+			assert entityA.members.size() == 1;
+
+			session.flush();
+
+			final EntityA found = session.createNamedQuery( "query1", EntityA.class ).getSingleResult();
+			assert found.members.size() == 1;
+			assert found == entityA;
 		} );
+	}
+
+	@Entity(name = "EntityA")
+	@NamedQuery( name = "query1", query = "from EntityA where id = 1" )
+	static class EntityA {
+		@Id
+		private Long id;
+
+		@OneToMany(cascade = CascadeType.PERSIST)
+		@JoinColumn
+		private List<EntityB> members = new ArrayList<>();
+	}
+
+	@Entity(name = "EntityB")
+	static class EntityB {
+		@Id
+		private Long id;
 	}
 }
