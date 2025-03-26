@@ -15,6 +15,7 @@
  */
 package org.hibernate.bugs;
 
+import org.hibernate.Session;
 import org.hibernate.cfg.AvailableSettings;
 
 import org.hibernate.testing.bytecode.enhancement.CustomEnhancementContext;
@@ -26,6 +27,15 @@ import org.hibernate.testing.orm.junit.SessionFactoryScope;
 import org.hibernate.testing.orm.junit.Setting;
 import org.junit.jupiter.api.Test;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToOne;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * This template demonstrates how to develop a test case for Hibernate ORM, using its built-in unit test framework.
  * <p>
@@ -34,9 +44,10 @@ import org.junit.jupiter.api.Test;
  */
 @DomainModel(
 		annotatedClasses = {
-				// Add your entities here, e.g.:
-				// Foo.class,
-				// Bar.class
+				QuarkusLikeORMUnitTestCase.User.class,
+				QuarkusLikeORMUnitTestCase.Book.class,
+				QuarkusLikeORMUnitTestCase.Country.class,
+				QuarkusLikeORMUnitTestCase.UserFavoriteBook.class,
 		}
 )
 @ServiceRegistry(
@@ -70,7 +81,158 @@ class QuarkusLikeORMUnitTestCase {
 	@Test
 	void hhh123Test(SessionFactoryScope scope) throws Exception {
 		scope.inTransaction( session -> {
-			// Do stuff...
+			initData( session );
+
+			var user = new User();
+			user.setId( 1L );
+			var book = new Book();
+			book.setId( 1L );
+
+			var favorite = new UserFavoriteBook();
+			favorite.setBook( book );
+			favorite.setUser( user );
+			session.persist( favorite );
+
+			// exception here
+			var fav = session.createQuery(
+					"from UserFavoriteBook ufb" +
+							" join fetch ufb.book b" +
+							" where b.id = ?1 and ufb.user.id = ?2",
+					UserFavoriteBook.class
+			).setParameter( 1, 1L ).setParameter( 2, 1L ).getSingleResult();
+			assertThat( fav ).isNotNull();
+			System.out.println( "Favorite is:" );
+			System.out.println( fav );
 		} );
+	}
+
+	void initData(Session session) {
+		var user = new User();
+		user.setId( 1L );
+		user.setName( "Test" );
+		session.persist( user );
+
+		var book = new Book();
+		book.setId( 2L );
+		book.setTitle( "A Book" );
+		session.persist( book );
+	}
+
+	@Entity(name = "UserEntity")
+	static class User {
+		@Id
+		@GeneratedValue
+		private Long id;
+
+		private String name;
+
+		public Long getId() {
+			return id;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+	}
+
+	@Entity(name = "BookEntity")
+	static class Book {
+		@Id
+		@GeneratedValue
+		private Long id;
+
+		private String title;
+
+		@OneToOne
+		@JoinColumn(name = "origin_country")
+		private Country origin;
+
+		public Long getId() {
+			return id;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public String getTitle() {
+			return title;
+		}
+
+		public void setTitle(String title) {
+			this.title = title;
+		}
+	}
+
+	@Entity(name = "CountryEntity")
+	static class Country {
+		@Id
+		@GeneratedValue
+		private Long id;
+
+		private String name;
+
+		public Long getId() {
+			return id;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public String getName() {
+			return name;
+		}
+
+		public void setName(String name) {
+			this.name = name;
+		}
+	}
+
+	@Entity(name = "UserFavoriteBook")
+	static class UserFavoriteBook {
+		@Id
+		@GeneratedValue
+		private Long id;
+
+		@ManyToOne
+		@JoinColumn(name = "user_id")
+		private User user;
+
+		@ManyToOne
+		@JoinColumn(name = "book_id")
+		private Book book;
+
+		public Long getId() {
+			return id;
+		}
+
+		public void setId(Long id) {
+			this.id = id;
+		}
+
+		public User getUser() {
+			return user;
+		}
+
+		public void setUser(User user) {
+			this.user = user;
+		}
+
+		public Book getBook() {
+			return book;
+		}
+
+		public void setBook(Book book) {
+			this.book = book;
+		}
 	}
 }
