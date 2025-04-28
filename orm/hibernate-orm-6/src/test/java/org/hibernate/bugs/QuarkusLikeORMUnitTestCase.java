@@ -16,7 +16,6 @@
 package org.hibernate.bugs;
 
 import org.hibernate.cfg.AvailableSettings;
-import org.hibernate.proxy.HibernateProxy;
 
 import org.hibernate.testing.bytecode.enhancement.CustomEnhancementContext;
 import org.hibernate.testing.bytecode.enhancement.extension.BytecodeEnhanced;
@@ -28,14 +27,12 @@ import org.hibernate.testing.orm.junit.Setting;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -86,11 +83,11 @@ class QuarkusLikeORMUnitTestCase {
 			a.setName( "A" );
 			Child y = new Child();
 			y.setName( "Child 1" );
-			a.setChildren( List.of( y ) );
+			y.setParent( a );
+			session.persist( y );
 			Parent b = new Parent();
 			b.setId( 2L );
 			b.setName( "B" );
-			b.setChildren( new ArrayList<>() );
 			session.persist( a );
 			session.persist( b );
 		} );
@@ -99,7 +96,7 @@ class QuarkusLikeORMUnitTestCase {
 	@Test
 	public void testSwapChild(SessionFactoryScope scope) {
 		// swap from A to B
-		swapChild( 1L, 1L, 2L, scope );
+		swapChild( 1L, 2L, scope );
 		scope.inSession( session -> {
 			final Parent a = session.find( Parent.class, 1L );
 			assertThat( a.getName() ).isEqualTo( "A" );
@@ -110,7 +107,7 @@ class QuarkusLikeORMUnitTestCase {
 		} );
 
 		// swap back from B to A
-		swapChild( 1L, 2L, 1L, scope );
+		swapChild( 1L, 1L, scope );
 		scope.inSession( session -> {
 			final Parent a = session.find( Parent.class, 1L );
 			assertThat( a.getName() ).isEqualTo( "A" );
@@ -122,15 +119,12 @@ class QuarkusLikeORMUnitTestCase {
 	}
 
 
-	private static void swapChild(Long childId, Long oldParentId, Long newParentId, SessionFactoryScope scope) {
+	private static void swapChild(Long childId, Long newParentId, SessionFactoryScope scope) {
 		scope.inTransaction( session -> {
-			var oldParent = session.find( Parent.class, oldParentId );
 			var newParent = session.find( Parent.class, newParentId );
 			var child = session.find( Child.class, childId );
-			oldParent.getChildren().remove( child );
-			newParent.getChildren().add( child );
-			session.merge( oldParent );
-			session.merge( newParent );
+			child.setParent( newParent );
+			session.merge( child );
 		} );
 	}
 
@@ -142,12 +136,23 @@ class QuarkusLikeORMUnitTestCase {
 
 		private String name;
 
+		@ManyToOne
+		private Parent parent;
+
 		public Long getId() {
 			return id;
 		}
 
 		public void setId(Long id) {
 			this.id = id;
+		}
+
+		public Parent getParent() {
+			return parent;
+		}
+
+		public void setParent(Parent parent) {
+			this.parent = parent;
 		}
 
 		public String getName() {
@@ -166,7 +171,7 @@ class QuarkusLikeORMUnitTestCase {
 
 		private String name;
 
-		@OneToMany(cascade = CascadeType.ALL)
+		@OneToMany(mappedBy = "parent")
 		private List<Child> children;
 
 		public Long getId() {
